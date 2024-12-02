@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 min-h-screen;
+  }
+}
+
+@layer components {
+  .comparison-table {
+    @apply w-full border-collapse;
+  }
+  
+  .comparison-table th {
+    @apply bg-gray-800 text-gray-100 px-4 py-2 text-left font-semibold;
+  }
+  
+  .comparison-table td {
+    @apply px-4 py-2 border-b border-gray-700;
+  }
+  
+  .comparison-table tr:hover {
+    @apply bg-gray-800/50 transition-colors;
+  }
+  
+  .spec-category {
+    @apply bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm
+           border border-gray-700/50 rounded-lg overflow-hidden mb-6;
+  }
+  
+  .spec-category-header {
+    @apply bg-gradient-to-r from-blue-500 to-purple-600
+           px-6 py-3 text-white font-semibold text-lg;
+  }
+  
+  .spec-row {
+    @apply grid grid-cols-[200px,1fr] md:grid-cols-[200px,repeat(2,1fr)] lg:grid-cols-[200px,repeat(3,1fr)]
+           border-b border-gray-700/50 last:border-0;
+  }
+  
+  .spec-label {
+    @apply px-4 py-3 font-medium text-gray-300 bg-gray-800/30;
+  }
+  
+  .spec-value {
+    @apply px-4 py-3 text-gray-100;
+  }
+  
+  .phone-card {
+    @apply bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg
+           p-6 flex flex-col items-center transition-all duration-300
+           hover:bg-gray-800/70 hover:border-gray-600;
+  }
+  
+  .phone-image {
+    @apply w-48 h-48 object-contain mb-4 rounded-lg
+           bg-gradient-to-br from-gray-900/50 to-gray-800/50
+           p-4 border border-gray-700/30;
+  }
+  
+  .action-button {
+    @apply inline-flex items-center px-4 py-2 rounded-lg
+           bg-gradient-to-r from-blue-500 to-purple-600
+           text-white font-medium transition-all duration-300
+           hover:from-blue-600 hover:to-purple-700
+           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+           focus:ring-offset-gray-900;
+  }
+  
+  .error-container {
+    @apply bg-red-900/20 border border-red-500/50 rounded-lg p-6
+           backdrop-blur-sm;
+  }
+  
+  .loading-container {
+    @apply flex items-center justify-center min-h-[400px]
+           bg-gray-800/30 rounded-lg border border-gray-700/50;
+  }
+}

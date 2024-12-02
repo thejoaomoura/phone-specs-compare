@@ -1,0 +1,270 @@
+# GSMArena API Documentation
+
+This documentation outlines the available endpoints, their functionalities, data structures, and return values for interacting with the GSMArena website.
+
+## Base URL
+```plaintext
+https://www.gsmarena.com
+```
+
+---
+
+## **Endpoints**
+
+### **1. Catalog**
+
+#### **Get Brands**
+Retrieve all available brands.
+
+- **Route:** `/makers.php3`
+- **Method:** `GET`
+- **Response:**
+  ```json
+  [
+    {
+      "id": "brand_id",
+      "name": "Brand Name",
+      "devices": 100
+    }
+  ]
+  ```
+
+---
+
+#### **Get Brand Devices**
+Retrieve all devices from a specific brand, including pagination.
+
+- **Route:** `/{brand_id}.php`
+- **Method:** `GET`
+- **Response:**
+  ```json
+  [
+    {
+      "id": "device_id",
+      "name": "Device Name",
+      "img": "Device Image URL",
+      "description": "Device Description"
+    }
+  ]
+  ```
+
+---
+
+#### **Get Device Details**
+Retrieve detailed specifications of a specific device.
+
+- **Route:** `/{device_id}.php`
+- **Method:** `GET`
+- **Response:**
+  ```json
+  {
+    "name": "Device Name",
+    "img": "Device Image URL",
+    "quickSpec": [
+      { "name": "Display size", "value": "6.5 inches" },
+      { "name": "Battery size", "value": "5000 mAh" }
+    ],
+    "detailSpec": [
+      {
+        "category": "Display",
+        "specifications": [
+          { "name": "Type", "value": "AMOLED" },
+          { "name": "Resolution", "value": "1080x2400 pixels" }
+        ]
+      }
+    ]
+  }
+  ```
+
+---
+
+### **2. Deals**
+
+#### **Get Deals**
+Retrieve the latest deals on devices.
+
+- **Route:** `/deals.php3`
+- **Method:** `GET`
+- **Response:**
+  ```json
+  [
+    {
+      "id": "device_id",
+      "name": "Device Name",
+      "img": "Device Image URL",
+      "url": "Device Deal URL",
+      "description": "Short Description",
+      "deal": {
+        "memory": "128GB",
+        "storeImg": "Store Logo URL",
+        "price": 299.99,
+        "currency": "USD",
+        "discount": 10.5
+      },
+      "history": [
+        { "time": "1 week ago", "price": 320.0, "currency": "USD" }
+      ]
+    }
+  ]
+  ```
+
+---
+
+### **3. Glossary**
+
+#### **Get Glossary**
+Retrieve glossary terms organized alphabetically.
+
+- **Route:** `/glossary.php3`
+- **Method:** `GET`
+- **Response:**
+  ```json
+  [
+    {
+      "letter": "A",
+      "list": [
+        { "id": "term_id", "name": "Term Name" }
+      ]
+    }
+  ]
+  ```
+
+#### **Get Term**
+Retrieve the definition of a specific glossary term.
+
+- **Route:** `/glossary.php3?term={term_id}`
+- **Method:** `GET`
+- **Response:**
+  ```json
+  {
+    "title": "Term Title",
+    "html": "HTML Content"
+  }
+  ```
+
+---
+
+### **4. Search**
+
+#### **Search Devices**
+Search for devices based on a query.
+
+- **Route:** `/results.php3?sQuickSearch=yes&sName={search_query}`
+- **Method:** `GET`
+- **Response:**
+  ```json
+  [
+    {
+      "id": "device_id",
+      "name": "Device Name",
+      "img": "Device Image URL",
+      "description": "Device Description"
+    }
+  ]
+  ```
+
+---
+
+### **5. Top Devices**
+
+#### **Get Top Devices**
+Retrieve the top-ranking devices in various categories.
+
+- **Route:** `/deals.php3`
+- **Method:** `GET`
+- **Response:**
+  ```json
+  [
+    {
+      "category": "Top Trending",
+      "list": [
+        {
+          "position": 1,
+          "id": "device_id",
+          "name": "Device Name",
+          "dailyHits": 10000
+        }
+      ]
+    }
+  ]
+  ```
+
+---
+
+## **Data Types and Properties**
+
+### **Brand**
+| Property   | Type     | Description            |
+|------------|----------|------------------------|
+| `id`       | `string` | Unique identifier for the brand. |
+| `name`     | `string` | Brand name.            |
+| `devices`  | `number` | Number of devices available. |
+
+---
+
+### **Device**
+| Property       | Type     | Description                   |
+|----------------|----------|-------------------------------|
+| `id`           | `string` | Unique identifier for the device. |
+| `name`         | `string` | Device name.                  |
+| `img`          | `string` | URL to the device's image.    |
+| `description`  | `string` | Brief description of the device. |
+
+---
+
+### **QuickSpec**
+| Property   | Type     | Description            |
+|------------|----------|------------------------|
+| `name`     | `string` | Name of the specification. |
+| `value`    | `string` | Value of the specification. |
+
+---
+
+### **DetailSpec**
+| Property       | Type     | Description                   |
+|----------------|----------|-------------------------------|
+| `category`     | `string` | Specification category name.  |
+| `specifications` | `array` | List of detailed specifications. |
+
+---
+
+### **Deal**
+| Property       | Type     | Description                   |
+|----------------|----------|-------------------------------|
+| `memory`       | `string` | Memory configuration.         |
+| `storeImg`     | `string` | URL to the store's logo.      |
+| `price`        | `number` | Discounted price.             |
+| `currency`     | `string` | Currency of the price.        |
+| `discount`     | `number` | Discount percentage.          |
+
+---
+
+### **Glossary Term**
+| Property   | Type     | Description            |
+|------------|----------|------------------------|
+| `id`       | `string` | Unique identifier for the term. |
+| `name`     | `string` | Name of the term.      |
+
+---
+
+### **History**
+| Property   | Type     | Description            |
+|------------|----------|------------------------|
+| `time`     | `string` | Time description (e.g., "1 week ago"). |
+| `price`    | `number` | Price at the given time. |
+| `currency` | `string` | Currency of the price.  |
+
+---
+
+### **Error Handling**
+All endpoints return appropriate error messages for invalid requests or server errors.
+
+```json
+{
+  "error": "Invalid request"
+}
+```
+
+### Feedback
+This structure ensures clarity, reusability, and maintainability for developers integrating the GSMArena scraping functionalities.
+
