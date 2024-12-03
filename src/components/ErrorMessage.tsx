@@ -1,4 +1,4 @@
-import React from 'react';
+//import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 
 interface ErrorMessageProps {
@@ -10,7 +10,7 @@ export default function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
   return (
     <div className="flex flex-col items-center justify-center p-4 text-center">
       <AlertTriangle className="h-12 w-12 text-red-500 mb-2" />
-      <p className="text-gray-700 mb-4">{message}</p>
+      <p className="text-red-600 font-medium text-lg mb-4">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
