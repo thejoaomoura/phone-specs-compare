@@ -1,4 +1,4 @@
-# Phone Specs Compare 
+# Comparetech - Comparador de Celulares Moderno
 
 Comparador de especificações de smartphones com dados em tempo real, interface moderna e tema escuro.
 
