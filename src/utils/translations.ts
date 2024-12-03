@@ -2,6 +2,7 @@
 export const categoryTranslations: Record<string, string> = {
   'Network': 'Rede',
   'Launch': 'Lançamento',
+  'Announced': 'Anunciado',
   'Body': 'Design',
   'Display': 'Tela',
   'Platform': 'Plataforma',
@@ -31,6 +32,8 @@ export const specTranslations: Record<string, string> = {
   'Weight': 'Peso',
   'Build': 'Construção',
   'SIM': 'Chip SIM',
+  'Positioning': 'Posicionamento',
+  'Colors': 'Cores',
   
   // Display
   'Type': 'Tipo',
@@ -71,10 +74,15 @@ export const specTranslations: Record<string, string> = {
   
   // Features
   'Sensors': 'Sensores',
+  'Infrared port': 'Porta Infravermelha',
   
   // Battery
   'Battery type': 'Tipo de Bateria',
   'Charging': 'Carregamento',
+  'Battery (new)': 'Bateria (nova)',
+  
+  // Misc
+  'Price': 'Preço',
   
   // Tests
   'Performance': 'Desempenho',
