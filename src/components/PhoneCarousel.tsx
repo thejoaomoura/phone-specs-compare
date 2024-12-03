@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Phone } from '../types';
 import PhoneCard from './PhoneCard';
+import PhoneDetailsModal from './PhoneDetailsModal';
 
 interface PhoneCarouselProps {
   phones: Phone[];
@@ -10,7 +11,8 @@ interface PhoneCarouselProps {
 
 export default function PhoneCarousel({ phones, autoplayInterval = 5000 }: PhoneCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsPerPage = 3;
+  const [selectedPhone, setSelectedPhone] = useState<Phone | null>(null);
+  const itemsPerPage = 4;
   const totalPages = Math.ceil(phones.length / itemsPerPage);
 
   useEffect(() => {
@@ -29,6 +31,10 @@ export default function PhoneCarousel({ phones, autoplayInterval = 5000 }: Phone
     setCurrentIndex((current) => (current + 1) % totalPages);
   };
 
+  const handlePhoneClick = (phone: Phone) => {
+    setSelectedPhone(phone);
+  };
+
   const visiblePhones = phones.slice(
     currentIndex * itemsPerPage,
     (currentIndex + 1) * itemsPerPage
@@ -39,7 +45,9 @@ export default function PhoneCarousel({ phones, autoplayInterval = 5000 }: Phone
       <div className="overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {visiblePhones.map((phone) => (
-            <PhoneCard key={phone.id} phone={phone} />
+            <div key={phone.id} onClick={() => handlePhoneClick(phone)} className="cursor-pointer">
+              <PhoneCard phone={phone} />
+            </div>
           ))}
         </div>
       </div>
@@ -48,30 +56,25 @@ export default function PhoneCarousel({ phones, autoplayInterval = 5000 }: Phone
         <>
           <button
             onClick={handlePrevious}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white p-2 rounded-full shadow-lg hover:bg-gray-50"
+            className="absolute -left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-cyber-900/80 backdrop-blur-sm border border-cyber-700/50 shadow-lg hover:bg-cyber-800 transition-all z-10"
           >
-            <ChevronLeft className="h-6 w-6 text-gray-600" />
+            <ChevronLeft className="h-6 w-6 text-cyber-100" />
           </button>
+
           <button
             onClick={handleNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white p-2 rounded-full shadow-lg hover:bg-gray-50"
+            className="absolute -right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-cyber-900/80 backdrop-blur-sm border border-cyber-700/50 shadow-lg hover:bg-cyber-800 transition-all z-10"
           >
-            <ChevronRight className="h-6 w-6 text-gray-600" />
+            <ChevronRight className="h-6 w-6 text-cyber-100" />
           </button>
         </>
       )}
 
-      <div className="flex justify-center mt-4 space-x-2">
-        {Array.from({ length: totalPages }).map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`h-2 w-2 rounded-full transition-colors ${
-              index === currentIndex ? 'bg-indigo-600' : 'bg-gray-300'
-            }`}
-          />
-        ))}
-      </div>
+      <PhoneDetailsModal
+        phone={selectedPhone!}
+        isOpen={!!selectedPhone}
+        onClose={() => setSelectedPhone(null)}
+      />
     </div>
   );
 }
