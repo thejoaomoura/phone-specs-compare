@@ -4,21 +4,54 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 min-h-screen;
+    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 min-h-screen;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700 rounded-full hover:bg-gray-600 transition-colors;
   }
 }
 
 @layer components {
+  .glass-panel {
+    @apply bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl;
+  }
+
+  .glass-input {
+    @apply bg-gray-800/50 border border-gray-700/50 rounded-xl text-gray-100 
+           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 
+           focus:border-transparent transition-all duration-200 hover:bg-gray-800/70;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl
+           shadow-lg hover:shadow-xl hover:from-cyan-600 hover:to-blue-600
+           transform hover:-translate-y-0.5 transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-gray-800 text-gray-100 rounded-xl border border-gray-700
+           hover:bg-gray-700 transition-all duration-200;
+  }
+
   .comparison-table {
     @apply w-full border-collapse;
   }
   
   .comparison-table th {
-    @apply bg-gray-800 text-gray-100 px-4 py-2 text-left font-semibold;
+    @apply bg-gray-800/80 backdrop-blur-sm text-gray-100 px-4 py-3 text-left font-semibold rounded-t-lg;
   }
   
   .comparison-table td {
-    @apply px-4 py-2 border-b border-gray-700;
+    @apply px-4 py-3 border-b border-gray-700/50;
   }
   
   .comparison-table tr:hover {
@@ -26,12 +59,11 @@
   }
   
   .spec-category {
-    @apply bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm
-           border border-gray-700/50 rounded-lg overflow-hidden mb-6;
+    @apply glass-panel mb-6 overflow-hidden;
   }
   
   .spec-category-header {
-    @apply bg-gradient-to-r from-blue-500 to-purple-600
+    @apply bg-gradient-to-r from-cyan-500 to-blue-500
            px-6 py-3 text-white font-semibold text-lg;
   }
   
@@ -49,33 +81,6 @@
   }
   
   .phone-card {
-    @apply bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg
-           p-6 flex flex-col items-center transition-all duration-300
-           hover:bg-gray-800/70 hover:border-gray-600;
-  }
-  
-  .phone-image {
-    @apply w-48 h-48 object-contain mb-4 rounded-lg
-           bg-gradient-to-br from-gray-900/50 to-gray-800/50
-           p-4 border border-gray-700/30;
-  }
-  
-  .action-button {
-    @apply inline-flex items-center px-4 py-2 rounded-lg
-           bg-gradient-to-r from-blue-500 to-purple-600
-           text-white font-medium transition-all duration-300
-           hover:from-blue-600 hover:to-purple-700
-           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-           focus:ring-offset-gray-900;
-  }
-  
-  .error-container {
-    @apply bg-red-900/20 border border-red-500/50 rounded-lg p-6
-           backdrop-blur-sm;
-  }
-  
-  .loading-container {
-    @apply flex items-center justify-center min-h-[400px]
-           bg-gray-800/30 rounded-lg border border-gray-700/50;
+    @apply glass-panel p-4 hover:scale-[1.02] transition-all duration-200 cursor-pointer;
   }
 }
