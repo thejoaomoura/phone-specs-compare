@@ -1,7 +1,6 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
-import { phones } from '../data/phones';
-import { Phone, PhoneDetail, LocalPhone } from '../types';
+import { Phone, PhoneDetail } from '../types';
 
 const BASE_URL = '/gsmarena';
 
@@ -28,45 +27,70 @@ interface FetchPhonesParams {
 }
 
 export const fetchPhones = async (params?: FetchPhonesParams) => {
-  let filteredPhones = [...phones];
-  
-  if (params?.search) {
-    filteredPhones = filteredPhones.filter(phone => 
-      phone.modelo.toLowerCase().includes(params.search!.toLowerCase()) ||
-      phone.marca.toLowerCase().includes(params.search!.toLowerCase())
-    );
+  try {
+    let url = '/';
+    
+    if (params?.brand) {
+      url = `/${params.brand}.php`;
+    } else if (params?.search) {
+      url = `/results.php3?sQuickSearch=yes&sName=${encodeURIComponent(params.search)}`;
+    }
+
+    const html = await getDataFromUrl(url);
+    const $ = cheerio.load(html);
+    const phones: Phone[] = [];
+
+    $('.phone-item').each((_, element) => {
+      const $element = $(element);
+      const $link = $element.find('a');
+      const id = $link.attr('href')?.split('-')[1].replace('.php', '') || '';
+      const name = $element.find('.phone-name').text().trim();
+      const img = $element.find('img').attr('src') || '';
+      const description = $element.find('.phone-description').text().trim();
+
+      if (id && name) {
+        phones.push({
+          id,
+          name,
+          img: img.startsWith('http') ? img : `${BASE_URL}${img}`,
+          description
+        });
+      }
+    });
+
+    return params?.limit ? phones.slice(0, params.limit) : phones;
+  } catch (error) {
+    console.error('Error fetching phones:', error);
+    throw error;
   }
-  
-  if (params?.brand) {
-    filteredPhones = filteredPhones.filter(phone => 
-      phone.marca.toLowerCase() === params.brand!.toLowerCase()
-    );
-  }
-  
-  if (params?.limit) {
-    filteredPhones = filteredPhones.slice(0, params.limit);
-  }
-  
-  return filteredPhones.map(phone => ({
-    id: phone.id,
-    name: `${phone.marca} ${phone.modelo}`,
-    img: phone.imagem,
-    description: `${phone.especificacoes.processador} • ${phone.especificacoes.ram} RAM`,
-  })) as Phone[];
 };
 
 export const fetchTopPhones = async () => {
-  // For now, we'll return all phones sorted by launch date (newest first)
-  const sortedPhones = [...phones].sort((a, b) => {
-    return parseInt(b.lancamento) - parseInt(a.lancamento);
-  });
-  
-  return sortedPhones.map(phone => ({
-    id: phone.id,
-    name: `${phone.marca} ${phone.modelo}`,
-    img: phone.imagem,
-    description: `${phone.especificacoes.processador} • ${phone.especificacoes.ram} RAM`,
-  })) as Phone[];
+  try {
+    const html = await getDataFromUrl('/');
+    const $ = cheerio.load(html);
+    
+    const phones: Phone[] = [];
+    $('.phone-item').each((_, element) => {
+      const $element = $(element);
+      const id = $element.find('a').attr('href')?.split('-')[1].replace('.php', '') || '';
+      const name = $element.find('.phone-name').text().trim();
+      const img = $element.find('img').attr('src') || '';
+      const description = $element.find('.phone-description').text().trim();
+      
+      phones.push({
+        id,
+        name,
+        img,
+        description
+      });
+    });
+    
+    return phones.slice(0, 12); // Return top 12 phones
+  } catch (error) {
+    console.error('Error fetching top phones:', error);
+    throw error;
+  }
 };
 
 export const searchPhones = async (searchValue: string) => {
@@ -98,7 +122,7 @@ export const searchPhones = async (searchValue: string) => {
         
         if (id && name) {
           const imgUrl = img.startsWith('http') ? img : `${BASE_URL}${img}`;
-          console.log('Found phone:', { id, name, imgUrl });
+          //console.log('Found phone:', { id, name, imgUrl });
           phones.push({ id, name, img: imgUrl, description });
         }
       } catch (parseError) {
@@ -107,30 +131,46 @@ export const searchPhones = async (searchValue: string) => {
     });
     
     if (phones.length === 0) {
-      console.warn('No phones found in API response, falling back to local search');
+      console.warn('Nenhum telefone encontrado na resposta da API, retornando à pesquisa local');
       return fetchPhones({ search: searchValue });
     }
     
     return phones;
   } catch (error) {
-    console.error('Error searching phones:', error);
-    console.log('Falling back to local search');
+    console.error('Erro ao pesquisar modelos:', error);
+    //console.log('Falling back to local search');
     return fetchPhones({ search: searchValue });
   }
 };
 
 export const getBrands = async () => {
-  const uniqueBrands = [...new Set(phones.map(phone => phone.marca))];
-  return uniqueBrands.map((brand, index) => ({
-    id: `brand-${index + 1}`,
-    name: brand,
-    devices: phones.filter(phone => phone.marca === brand).length,
-  }));
+  try {
+    const html = await getDataFromUrl('/makers.php3');
+    const $ = cheerio.load(html);
+    const brands: Array<{ id: string; name: string; devices: number }> = [];
+
+    $('.brand-listings li').each((_, element) => {
+      const $element = $(element);
+      const $link = $element.find('a');
+      const id = $link.attr('href')?.split('.')[0] || '';
+      const name = $link.text().trim();
+      const devices = parseInt($element.find('.count').text().trim()) || 0;
+
+      if (id && name) {
+        brands.push({ id, name, devices });
+      }
+    });
+
+    return brands;
+  } catch (error) {
+    console.error('Error fetching brands:', error);
+    throw error;
+  }
 };
 
 export const getPhoneDetails = async (deviceId: string): Promise<PhoneDetail> => {
   try {
-    console.log('Fetching phone details for:', deviceId);
+    //console.log('Fetching phone details for:', deviceId);
     const data = await getDataFromUrl(`/${deviceId}.php`);
     
     if (!data) {
@@ -140,7 +180,7 @@ export const getPhoneDetails = async (deviceId: string): Promise<PhoneDetail> =>
 
     const $ = cheerio.load(data);
     
-    // Nome do telefone - ajustando seletor
+    // Nome do telefone 
     const name = $('h1.specs-phone-name-title').text().trim() || 
                 $('.specs-phone-name-title').text().trim() ||
                 $('h1').first().text().trim();
@@ -150,7 +190,7 @@ export const getPhoneDetails = async (deviceId: string): Promise<PhoneDetail> =>
       throw new Error('Could not find phone name');
     }
 
-    // Imagem do telefone - ajustando seletor
+    // Imagem do telefone 
     const img = $('.specs-photo-main a img').attr('src') ||
                $('.specs-photo-main img').attr('src') ||
                $('.phone-big-photo img').attr('src') ||
@@ -210,8 +250,8 @@ export const getPhoneDetails = async (deviceId: string): Promise<PhoneDetail> =>
 
     // Garantindo que temos pelo menos algumas especificações
     if (quickSpec.length === 0 && detailSpec.length === 0) {
-      console.warn('No specifications found');
-      throw new Error('No specifications found');
+      console.warn('Nenhuma especificação encontrada');
+      throw new Error('Nenhuma especificação encontrada');
     }
 
     // Se não temos especificações rápidas mas temos detalhadas, criar quickSpec a partir das detalhadas
@@ -233,74 +273,12 @@ export const getPhoneDetails = async (deviceId: string): Promise<PhoneDetail> =>
       detailSpec
     };
 
-    console.log('Successfully parsed phone details:', phoneDetail.name);
+    //console.log('Successfully parsed phone details:', phoneDetail.name);
     return phoneDetail;
 
   } catch (error) {
     console.error('Error fetching phone details:', error);
-    // Não vamos mais tentar fallback para dados locais
-    // Em vez disso, vamos lançar o erro para ser tratado pelo componente
     throw error;
   }
 };
 
-// Função auxiliar para buscar dados locais como fallback
-const getLocalPhoneDetails = (deviceId: string) => {
-  const phone = phones.find(p => p.id === deviceId);
-  
-  if (!phone) {
-    throw new Error('Phone not found');
-  }
-  
-  return {
-    name: `${phone.marca} ${phone.modelo}`,
-    img: phone.imagem,
-    quickSpec: [
-      { name: 'Tela', value: phone.especificacoes.tela },
-      { name: 'Processador', value: phone.especificacoes.processador },
-      { name: 'RAM', value: phone.especificacoes.ram },
-      { name: 'Armazenamento', value: phone.especificacoes.armazenamento },
-      { name: 'Bateria', value: phone.especificacoes.bateria },
-      { name: 'Câmera Principal', value: phone.especificacoes.cameraPrincipal },
-      { name: 'Câmera Frontal', value: phone.especificacoes.cameraFrontal },
-    ],
-    detailSpec: [
-      {
-        category: 'Tela',
-        specifications: [
-          { name: 'Display', value: phone.especificacoes.tela },
-        ],
-      },
-      {
-        category: 'Hardware',
-        specifications: [
-          { name: 'Processador', value: phone.especificacoes.processador },
-          { name: 'RAM', value: phone.especificacoes.ram },
-          { name: 'Armazenamento', value: phone.especificacoes.armazenamento },
-        ],
-      },
-      {
-        category: 'Câmeras',
-        specifications: [
-          { name: 'Principal', value: phone.especificacoes.cameraPrincipal },
-          { name: 'Frontal', value: phone.especificacoes.cameraFrontal },
-        ],
-      },
-      {
-        category: 'Bateria',
-        specifications: [
-          { name: 'Capacidade', value: phone.especificacoes.bateria },
-        ],
-      },
-      {
-        category: 'Informações Gerais',
-        specifications: [
-          { name: 'Marca', value: phone.marca },
-          { name: 'Modelo', value: phone.modelo },
-          { name: 'Lançamento', value: phone.lancamento },
-          { name: 'Preço', value: `R$ ${phone.preco.toFixed(2)}` },
-        ],
-      },
-    ],
-  };
-};
