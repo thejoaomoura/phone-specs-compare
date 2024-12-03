@@ -1,10 +1,11 @@
-import React from 'react';
+//import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import ComparisonPage from './pages/ComparisonPage';
+import FavoritesPage from './pages/FavoritesPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,6 +27,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/buscar" element={<SearchPage />} />
               <Route path="/comparar" element={<ComparisonPage />} />
+              <Route path="/favoritos" element={<FavoritesPage />} />
             </Routes>
           </main>
         </div>
