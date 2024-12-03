@@ -72,8 +72,8 @@ export default function SearchPage() {
               >
                 <option value="">Todas as marcas</option>
                 {brands?.map((brand) => (
-                  <option key={brand} value={brand}>
-                    {brand}
+                  <option key={brand.id} value={brand.name}>
+                    {brand.name} ({brand.devices} dispositivos)
                   </option>
                 ))}
               </select>
