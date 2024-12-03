@@ -16,8 +16,26 @@ export interface Brand {
 }
 
 export interface PhoneDetail {
+  id: string;
   name: string;
+  brand: string;
   img: string;
+  priceRange: {
+    min: number;
+    max: number;
+  };
+  ratings: {
+    overall: number;
+    display: number;
+    camera: number;
+    performance: number;
+    battery: number;
+  };
+  price?: number;
+  specs?: {
+    rating?: string;
+    [key: string]: string | undefined;
+  };
   quickSpec: Array<{
     name: string;
     value: string;
