@@ -254,7 +254,6 @@ export const getPhoneDetails = async (deviceId: string): Promise<PhoneDetail> =>
       throw new Error('Nenhuma especificação encontrada');
     }
 
-    // Se não temos especificações rápidas mas temos detalhadas, criar quickSpec a partir das detalhadas
     if (quickSpec.length === 0 && detailSpec.length > 0) {
       const importantCategories = ['Display', 'Platform', 'Memory', 'Camera', 'Battery'];
       detailSpec.forEach(category => {
@@ -267,9 +266,13 @@ export const getPhoneDetails = async (deviceId: string): Promise<PhoneDetail> =>
     }
 
     const phoneDetail: PhoneDetail = {
+      id: name.toLowerCase().replace(/\s+/g, '-'),
       name,
+      brand: name.split(' ')[0],
       img: img.startsWith('http') ? img : `${BASE_URL}${img}`,
-      quickSpec: quickSpec.slice(0, 7), // Limitando a 7 especificações rápidas
+      priceRange: { min: 0, max: 0 },
+      ratings: { overall: 0, display: 0, camera: 0, performance: 0, battery: 0 },
+      quickSpec: quickSpec.slice(0, 7),
       detailSpec
     };
 
@@ -281,4 +284,3 @@ export const getPhoneDetails = async (deviceId: string): Promise<PhoneDetail> =>
     throw error;
   }
 };
-
