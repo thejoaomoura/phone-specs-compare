@@ -3,6 +3,10 @@ export interface Phone {
   name: string;
   img: string;
   description?: string;
+  specs?: {
+    [key: string]: string;
+  };
+  price?: number;
 }
 
 export interface Brand {
@@ -43,6 +47,12 @@ export interface LocalPhone {
     cameraFrontal: string;
   };
   imagem: string;
+}
+
+export interface SavedComparison {
+  id: string;
+  phones: PhoneDetail[];
+  date: string;
 }
 
 export interface ComparisonState {
