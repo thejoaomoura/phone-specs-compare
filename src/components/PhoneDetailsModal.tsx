@@ -1,4 +1,3 @@
-//import React from 'react';
 import { X } from 'lucide-react';
 import { Phone } from '../types';
 
@@ -9,69 +8,105 @@ interface PhoneDetailsModalProps {
 }
 
 export default function PhoneDetailsModal({ phone, isOpen, onClose }: PhoneDetailsModalProps) {
-  if (!isOpen) return null;
+  if (!isOpen || !phone) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-          <div className="absolute inset-0 bg-cyber-950 opacity-75"></div>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-panel" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          padding: '1.25rem 1.5rem',
+          borderBottom: '1px solid var(--border)',
+          background: 'var(--paper-2)',
+        }}>
+          <div>
+            <div className="catalog-num" style={{ color: 'var(--rust)', marginBottom: '0.3rem' }}>
+              {phone.name.split(' ')[0]} — Especificações
+            </div>
+            <h2 style={{
+              fontFamily: '"Cormorant Garamond", Georgia, serif',
+              fontWeight: 400,
+              fontSize: '1.6rem',
+              color: 'var(--ink)',
+              margin: 0,
+              lineHeight: 1.1,
+            }}>
+              {phone.name}
+            </h2>
+          </div>
+          <button onClick={onClose} style={{
+            background: 'none',
+            border: '1px solid var(--border)',
+            cursor: 'pointer',
+            padding: '0.4rem',
+            color: 'var(--ink-2)',
+            display: 'flex',
+            alignItems: 'center',
+            transition: 'all 0.15s',
+          }}>
+            <X size={16} />
+          </button>
         </div>
 
-        <div className="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-cyber-900 rounded-2xl border border-cyber-700 shadow-xl">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-              {phone.name}
-            </h3>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-full hover:bg-cyber-800 transition-colors"
-            >
-              <X className="h-6 w-6 text-cyber-200" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex justify-center items-center bg-cyber-950/50 rounded-xl p-4">
+        {/* Body */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '0' }}>
+          {/* Image */}
+          <div style={{
+            background: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+            borderRight: '1px solid var(--border)',
+          }}>
+            {phone.img ? (
               <img
                 src={phone.img}
                 alt={phone.name}
-                className="max-h-80 object-contain"
+                referrerPolicy="no-referrer"
+                style={{ maxHeight: '240px', maxWidth: '100%', objectFit: 'contain' }}
               />
-            </div>
-
-            <div className="space-y-4">
-              {phone.description && (
-                <div>
-                  <h4 className="text-lg font-semibold text-neon-400 mb-2">Descrição</h4>
-                  <p className="text-cyber-200">{phone.description}</p>
-                </div>
-              )}
-
-              <div>
-                <h4 className="text-lg font-semibold text-neon-400 mb-2">Especificações</h4>
-                <div className="space-y-2">
-                  {phone.specs && Object.entries(phone.specs).map(([key, value]: [string, string]) => (
-                    <div key={key} className="flex justify-between py-2 border-b border-cyber-700/50">
-                      <span className="text-cyber-300">{key}</span>
-                      <span className="text-cyber-100">{String(value)}</span>
-                    </div>
-                  ))}
-                </div>
+            ) : (
+              <div style={{
+                width: '100px', height: '150px',
+                border: '1px dashed var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <span style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.55rem', color: 'var(--ink-3)' }}>
+                  sem imagem
+                </span>
               </div>
+            )}
+          </div>
 
-              {phone.price && (
-                <div className="mt-4">
-                  <h4 className="text-lg font-semibold text-neon-400 mb-2">Preço</h4>
-                  <p className="text-2xl font-bold text-cyber-100">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL'
-                    }).format(Number(phone.price))}
-                  </p>
-                </div>
-              )}
-            </div>
+          {/* Description */}
+          <div style={{ padding: '1.5rem' }}>
+            {phone.description && (
+              <>
+                <div className="section-label" style={{ marginBottom: '0.75rem' }}>Descrição</div>
+                <p style={{
+                  fontFamily: '"EB Garamond", Georgia, serif',
+                  fontSize: '0.95rem',
+                  color: 'var(--ink-2)',
+                  lineHeight: 1.7,
+                  marginBottom: '1.5rem',
+                }}>
+                  {phone.description}
+                </p>
+              </>
+            )}
+            <div className="section-label" style={{ marginBottom: '0.75rem' }}>Acesso rápido</div>
+            <p style={{
+              fontFamily: '"EB Garamond", Georgia, serif',
+              fontSize: '0.9rem',
+              color: 'var(--ink-3)',
+              fontStyle: 'italic',
+            }}>
+              Abra a página de comparação para ver todas as especificações técnicas detalhadas.
+            </p>
           </div>
         </div>
       </div>

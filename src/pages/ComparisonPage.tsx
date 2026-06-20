@@ -6,258 +6,296 @@ import ErrorMessage from '../components/ErrorMessage';
 import { PhoneDetail } from '../types';
 import { translateCategory, translateSpec } from '../utils/translations';
 import { fetchPhonePrice } from '../services/priceService';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { CheckCircle } from 'lucide-react';
 
 export default function ComparisonPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const phoneIds = searchParams.get('phones')?.split(',') || [];
   const [phonePrices, setPhonePrices] = useState<Record<string, { price: string; link: string | null }>>({});
-  
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
   const phoneQueries = phoneIds.map(id => usePhoneDetails(id));
-  const isLoading = phoneQueries.some(query => query.isLoading);
-  const errors = phoneQueries.filter(query => query.error).map(query => query.error);
-  const phones = phoneQueries
-    .map(query => query.data)
-    .filter((phone): phone is PhoneDetail => Boolean(phone));
+  const isLoading = phoneQueries.some(q => q.isLoading);
+  const errors = phoneQueries.filter(q => q.error).map(q => q.error);
+  const phones = phoneQueries.map(q => q.data).filter((p): p is PhoneDetail => Boolean(p));
 
   useEffect(() => {
-    const fetchPrices = async () => {
-      const pricePromises = phones.map(async (phone) => {
-        const priceInfo = await fetchPhonePrice(phone.name);
-        return { id: phone.name, ...priceInfo };
-      });
-
-      const prices = await Promise.all(pricePromises);
-      const priceMap = prices.reduce((acc, { id, price, link }) => {
-        if (price) {
-          acc[id] = { price, link };
-        }
+    if (phones.length === 0) return;
+    Promise.all(
+      phones.map(async phone => {
+        const info = await fetchPhonePrice(phone.name);
+        return { id: phone.name, ...info };
+      })
+    ).then(prices => {
+      const map = prices.reduce((acc, { id, price, link }) => {
+        if (price) acc[id] = { price, link };
         return acc;
       }, {} as Record<string, { price: string; link: string | null }>);
+      setPhonePrices(map);
+    });
+  }, [phones.length]);
 
-      setPhonePrices(priceMap);
-    };
-
-    if (phones.length > 0) {
-      fetchPrices();
-    }
-  }, [phones]);
-
-  const handleSaveComparison = () => {
-    const newComparison = {
-      id: Date.now().toString(),
-      phones,
-      date: new Date().toISOString()
-    };
-
-    const savedComparisons = JSON.parse(localStorage.getItem('savedComparisons') || '[]');
-    const updatedComparisons = [newComparison, ...savedComparisons];
-    localStorage.setItem('savedComparisons', JSON.stringify(updatedComparisons));
-
-    alert('Comparação salva com sucesso!');
+  const handleSave = () => {
+    const saved = JSON.parse(localStorage.getItem('savedComparisons') || '[]');
+    saved.unshift({ id: Date.now().toString(), phones, date: new Date().toISOString() });
+    localStorage.setItem('savedComparisons', JSON.stringify(saved));
+    showToast('Comparação salva na coleção.');
   };
 
   const handleShare = async () => {
-    try {
-      await navigator.share({
-        title: 'Comparação de Celulares',
-        url: window.location.href,
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
+    try { await navigator.share({ title: 'Comparativo de dispositivos', url: window.location.href }); }
+    catch { /* unsupported */ }
   };
 
-  if (phoneIds.length < 2) {
-    return (
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="error-container">
-          <ErrorMessage
-            message="Selecione pelo menos 2 celulares para comparar."
-            onRetry={() => navigate('/buscar')}
-          />
-        </div>
-      </div>
-    );
-  }
+  if (phoneIds.length < 2) return (
+    <div className="page-container" style={{ padding: '3rem 1.5rem' }}>
+      <ErrorMessage message="Selecione pelo menos 2 dispositivos para comparar." onRetry={() => navigate('/buscar')} />
+    </div>
+  );
 
-  if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <LoadingSpinner />
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '5rem 0' }}>
+      <LoadingSpinner />
+    </div>
+  );
 
-  if (errors.length > 0) {
-    return (
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="error-container space-y-4">
-          <ErrorMessage
-            message="Não foi possível carregar os detalhes de alguns celulares."
-            onRetry={() => phoneQueries.forEach(query => query.refetch())}
-          />
-          <div className="bg-red-900/30 p-4 rounded-lg border border-red-500/30">
-            <h3 className="text-sm font-medium text-red-200">Detalhes dos erros:</h3>
-            <ul className="mt-2 text-sm text-red-100 list-disc list-inside">
-              {errors.map((error, index) => (
-                <li key={index}>{error instanceof Error ? error.message : 'Erro desconhecido'}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (errors.length > 0) return (
+    <div className="page-container" style={{ padding: '3rem 1.5rem' }}>
+      <ErrorMessage
+        message="Não foi possível carregar as especificações."
+        onRetry={() => phoneQueries.forEach(q => q.refetch())}
+      />
+    </div>
+  );
+
+  const cols = phones.length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-      {/* Header Actions */}
-      <div className="flex justify-between items-center mb-8">
-        <button
-          onClick={() => navigate('/buscar')}
-          className="inline-flex items-center px-4 py-2 bg-gray-800/80 text-gray-100 rounded-xl 
-                   hover:bg-gray-700/80 transition-all duration-200"
-        >
-          <ArrowLeft className="h-5 w-5 mr-2" />
-          Voltar para busca
+    <div style={{ minHeight: '100vh' }}>
+      {/* ── Topbar ─────────────────────────────────────── */}
+      <div style={{
+        borderBottom: '1px solid var(--border)',
+        padding: '1rem 1.5rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        background: 'var(--paper-2)',
+        position: 'sticky',
+        top: '88px',
+        zIndex: 30,
+      }}>
+        <button className="btn-ghost" onClick={() => navigate('/buscar')}>
+          <ArrowLeft size={13} />
+          Voltar ao catálogo
         </button>
-        
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center px-4 py-2 bg-gray-800/80 text-gray-100 rounded-xl 
-                     hover:bg-gray-700/80 transition-all duration-200"
-          >
-            <Share2 className="h-5 w-5 mr-2" />
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn-ghost" onClick={handleShare}>
+            <Share2 size={12} />
             Compartilhar
           </button>
-          
-          <button
-            onClick={handleSaveComparison}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 
-                     text-white rounded-xl hover:from-cyan-600 hover:to-blue-600 transition-all duration-200"
-          >
-            <Bookmark className="h-5 w-5 mr-2" />
+          <button className="btn-primary" onClick={handleSave}>
+            <Bookmark size={12} />
             Salvar
           </button>
         </div>
       </div>
 
-      {/* Size Comparison Notice */}
-      <div className="flex items-center justify-center gap-4 mb-8 text-gray-400">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-12 border-2 border-gray-700 rounded"></div>
-          <div className="w-6 h-10 border-2 border-gray-700 rounded"></div>
+      {/* ── Phone headers ──────────────────────────────── */}
+      <div className="page-container" style={{ padding: '2.5rem 1.5rem 0' }}>
+        <div className="section-label" style={{ marginBottom: '1.5rem' }}>
+          Análise comparativa — {phones.map(p => p.name).join(' vs. ')}
         </div>
-        <span className="text-sm">Comparação em Tamanho Real</span>
-      </div>
-      
-      {/* Phone Cards */}
-      <div className="grid grid-cols-2 gap-8 mb-12">
-        {phones.map((phone) => (
-          <div key={phone.name} className="flex flex-col items-center">
-            <div className="relative w-64 h-80 mb-4">
-              <img
-                src={phone.img}
-                alt={phone.name}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold text-gray-100">
-                {phone.name}
-              </h3>
-              <div className="text-2xl font-bold text-cyan-400">
-                {phonePrices[phone.name]?.price 
-                  ? `R$ ${Number(phonePrices[phone.name].price).toLocaleString('pt-BR', { 
-                      minimumFractionDigits: 2, 
-                      maximumFractionDigits: 2 
-                    })}` 
-                  : 'Preço indisponível'}
+
+        <div style={{ display: 'grid', gridTemplateColumns: `200px repeat(${cols}, 1fr)`, gap: 0, border: '1px solid var(--border)' }}>
+          {/* empty corner */}
+          <div style={{ background: 'var(--ink)', borderRight: '1px solid rgba(242,237,226,0.1)' }} />
+          {phones.map((phone, i) => (
+            <div key={phone.name} style={{
+              background: 'var(--ink)',
+              color: 'var(--paper)',
+              padding: '1.5rem 1rem',
+              borderRight: i < cols - 1 ? '1px solid rgba(242,237,226,0.1)' : 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.75rem',
+            }}>
+              {/* Image */}
+              <div style={{
+                width: '100px',
+                height: '130px',
+                background: 'rgba(255,255,255,0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0.5rem',
+              }}>
+                {phone.img && (
+                  <img
+                    src={phone.img}
+                    alt={phone.name}
+                    referrerPolicy="no-referrer"
+                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                  />
+                )}
               </div>
-              {phonePrices[phone.name]?.link ? (
-                <a 
-                  href={phonePrices[phone.name].link!} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-cyan-400 hover:underline"
-                >
-                  Ver Todos
-                </a>
-              ) : (
-                <span className="text-sm text-gray-400">Link indisponível</span>
-              )}
+              {/* Name */}
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  fontFamily: '"Space Mono", monospace',
+                  fontSize: '0.55rem',
+                  letterSpacing: '0.1em',
+                  color: 'rgba(242,237,226,0.5)',
+                  textTransform: 'uppercase',
+                  marginBottom: '0.3rem',
+                }}>
+                  {phone.brand}
+                </div>
+                <div style={{
+                  fontFamily: '"Cormorant Garamond", Georgia, serif',
+                  fontWeight: 400,
+                  fontSize: '1.1rem',
+                  color: 'var(--paper)',
+                  lineHeight: 1.2,
+                }}>
+                  {phone.name.replace(phone.brand, '').trim()}
+                </div>
+              </div>
+              {/* Price */}
+              <div style={{ textAlign: 'center', marginTop: '0.25rem' }}>
+                {phonePrices[phone.name]?.price ? (
+                  <>
+                    <div style={{
+                      fontFamily: '"Space Mono", monospace',
+                      fontSize: '0.85rem',
+                      color: 'var(--rust)',
+                      letterSpacing: '0.02em',
+                    }}>
+                      R$ {Number(phonePrices[phone.name].price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </div>
+                    {phonePrices[phone.name]?.link && (
+                      <a
+                        href={phonePrices[phone.name].link!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          fontFamily: '"Space Mono", monospace',
+                          fontSize: '0.55rem',
+                          color: 'rgba(242,237,226,0.4)',
+                          textDecoration: 'underline',
+                          letterSpacing: '0.08em',
+                        }}
+                      >
+                        Ver oferta
+                      </a>
+                    )}
+                  </>
+                ) : (
+                  <span style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.6rem', color: 'rgba(242,237,226,0.3)' }}>
+                    Preço indisponível
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Comparison Sections */}
-      <div className="space-y-6">
-        {phones[0]?.detailSpec.map((category, index) => (
-          <div key={category.category}>
-            {/* Category Header */}
-            <div className="bg-blue-500 text-white px-4 py-2 text-lg font-medium rounded-t-lg">
-              {translateCategory(category.category)}
-            </div>
-            
-            {/* Specifications */}
-            <div className="divide-y divide-gray-700/30">
-              {category.specifications.map((spec, specIndex) => {
+      {/* ── Toast ─────────────────────────────────────── */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '1.5rem',
+          right: '1.5rem',
+          background: 'var(--ink)',
+          color: 'var(--paper)',
+          padding: '0.75rem 1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.6rem',
+          border: '1px solid rgba(242,237,226,0.15)',
+          zIndex: 100,
+          animation: 'slideUpFade 0.25s ease both',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+        }}>
+          <CheckCircle size={14} style={{ color: 'var(--rust)', flexShrink: 0 }} />
+          <span style={{
+            fontFamily: '"Space Mono", monospace',
+            fontSize: '0.65rem',
+            letterSpacing: '0.08em',
+          }}>
+            {toast}
+          </span>
+        </div>
+      )}
+
+      {/* ── Spec tables ────────────────────────────────── */}
+      <div className="page-container" style={{ padding: '0 1.5rem 3rem' }}>
+        {phones[0]?.detailSpec.map((category, catIdx) => {
+          return (
+            <div key={category.category} style={{ marginTop: '2px' }}>
+              {/* Category header */}
+              <div className="compare-cat-header" style={{ display: 'grid', gridTemplateColumns: `200px repeat(${cols}, 1fr)` }}>
+                <div style={{ borderRight: '1px solid rgba(242,237,226,0.1)' }}>
+                  {translateCategory(category.category)}
+                </div>
+                {phones.map((p, i) => (
+                  <div key={p.name} style={{
+                    borderRight: i < cols - 1 ? '1px solid rgba(242,237,226,0.1)' : 'none',
+                    fontFamily: '"Space Mono", monospace',
+                    fontSize: '0.6rem',
+                    letterSpacing: '0.08em',
+                    color: 'rgba(242,237,226,0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {p.name.split(' ')[0]}
+                  </div>
+                ))}
+              </div>
+
+              {/* Rows */}
+              {category.specifications.map((spec, specIdx) => {
                 const values = phones.map(
-                  phone => phone.detailSpec[index]?.specifications[specIndex]?.value || '-'
+                  p => p.detailSpec[catIdx]?.specifications[specIdx]?.value || '—'
                 );
-                const hasDifferences = new Set(values).size > 1;
+                const hasDiff = new Set(values).size > 1;
 
                 return (
                   <div
                     key={spec.name}
-                    className={`grid grid-cols-[2fr,repeat(${phones.length},1fr)] 
-                             ${hasDifferences ? 'bg-gray-800/30' : 'bg-gray-900/30'}`}
+                    className="compare-row"
+                    style={{
+                      gridTemplateColumns: `200px repeat(${cols}, 1fr)`,
+                      background: hasDiff ? 'rgba(193,68,14,0.04)' : undefined,
+                      borderLeft: '1px solid var(--border)',
+                      borderRight: '1px solid var(--border)',
+                    }}
                   >
-                    <div className="p-4 font-medium text-gray-300">
-                      {translateSpec(spec.name)}
-                    </div>
-                    {phones.map((phone, phoneIndex) => (
+                    <div className="compare-cell-label">{translateSpec(spec.name)}</div>
+                    {values.map((val, vi) => (
                       <div
-                        key={`${phone.name}-${spec.name}`}
-                        className={`p-4 text-center ${
-                          values[phoneIndex] === 'Sim' 
-                            ? 'text-green-500' 
-                            : values[phoneIndex] === 'Não'
-                            ? 'text-red-500'
-                            : hasDifferences && values[phoneIndex] !== '-'
-                            ? 'text-cyan-400 font-medium'
-                            : 'text-gray-400'
-                        }`}
+                        key={vi}
+                        className={`compare-cell-value${hasDiff && val !== '—' ? ' highlight' : ''}`}
+                        style={{ borderRight: vi < cols - 1 ? '1px solid var(--border)' : 'none' }}
                       >
-                        {values[phoneIndex] === 'Sim' ? '✓' : values[phoneIndex]}
+                        {val === 'Sim' ? '✓' : val === 'Não' ? '—' : val}
                       </div>
                     ))}
                   </div>
                 );
               })}
             </div>
-
-            {/* Scores Section */}
-            {category.category === 'Notas' && (
-              <div className="grid grid-cols-[2fr,repeat(2,1fr)] gap-2 bg-gray-900/30 p-4">
-                {phones.map((phone) => (
-                  <div key={`score-${phone.name}`} className="col-start-2 text-center">
-                    <div className="text-2xl font-bold text-cyan-400">
-                      {(phone.specs?.rating || '8.5')}<span className="text-sm text-gray-400">/10</span>
-                    </div>
-                    <div className="text-sm text-gray-400">Pontuação Final</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

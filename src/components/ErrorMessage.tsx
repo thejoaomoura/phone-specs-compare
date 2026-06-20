@@ -1,6 +1,3 @@
-//import React from 'react';
-import { AlertTriangle } from 'lucide-react';
-
 interface ErrorMessageProps {
   message: string;
   onRetry?: () => void;
@@ -8,15 +5,33 @@ interface ErrorMessageProps {
 
 export default function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
   return (
-    <div className="flex flex-col items-center justify-center p-4 text-center">
-      <AlertTriangle className="h-12 w-12 text-red-500 mb-2" />
-      <p className="text-red-600 font-medium text-lg mb-4">{message}</p>
+    <div style={{
+      border: '1px solid var(--rust)',
+      padding: '2rem',
+      background: 'var(--paper-2)',
+      textAlign: 'center',
+    }}>
+      <div style={{
+        fontFamily: '"Space Mono", monospace',
+        fontSize: '0.6rem',
+        letterSpacing: '0.15em',
+        textTransform: 'uppercase',
+        color: 'var(--rust)',
+        marginBottom: '0.75rem',
+      }}>
+        ✕ Falha no acervo
+      </div>
+      <p style={{
+        fontFamily: '"EB Garamond", Georgia, serif',
+        fontSize: '1rem',
+        color: 'var(--ink-2)',
+        marginBottom: onRetry ? '1.25rem' : 0,
+      }}>
+        {message}
+      </p>
       {onRetry && (
-        <button
-          onClick={onRetry}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-        >
-          Tentar Novamente
+        <button className="btn-ghost" onClick={onRetry}>
+          Tentar novamente
         </button>
       )}
     </div>

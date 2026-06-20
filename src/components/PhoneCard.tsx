@@ -1,87 +1,156 @@
 import React from 'react';
 import { Phone } from '../types';
-import { Plus, Check, Heart } from 'lucide-react';
+import { Heart, Plus, Check } from 'lucide-react';
 
 interface PhoneCardProps {
   phone: Phone;
   isSelected?: boolean;
   onSelect?: (phone: Phone) => void;
   isFavorite?: boolean;
+  index?: number;
 }
 
-export default function PhoneCard({ phone, isSelected, onSelect, isFavorite }: PhoneCardProps) {
+export default function PhoneCard({ phone, isSelected, onSelect, index = 0 }: PhoneCardProps) {
   const [isFav, setIsFav] = React.useState(false);
 
   React.useEffect(() => {
-    const storedFavorites = localStorage.getItem('favorites');
-    if (storedFavorites) {
-      const favorites = JSON.parse(storedFavorites);
-      setIsFav(favorites.some((fav: Phone) => fav.id === phone.id));
+    const stored = localStorage.getItem('favorites');
+    if (stored) {
+      const favs: Phone[] = JSON.parse(stored);
+      setIsFav(favs.some(f => f.id === phone.id));
     }
   }, [phone.id]);
 
   const toggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const storedFavorites = localStorage.getItem('favorites');
-    let favorites: Phone[] = storedFavorites ? JSON.parse(storedFavorites) : [];
-    
+    const stored = localStorage.getItem('favorites');
+    let favs: Phone[] = stored ? JSON.parse(stored) : [];
     if (isFav) {
-      favorites = favorites.filter((fav: Phone) => fav.id !== phone.id);
+      favs = favs.filter(f => f.id !== phone.id);
     } else {
-      favorites.push(phone);
+      favs.push(phone);
     }
-    
-    localStorage.setItem('favorites', JSON.stringify(favorites));
+    localStorage.setItem('favorites', JSON.stringify(favs));
     setIsFav(!isFav);
   };
 
+  const catalogNum = String(index + 1).padStart(4, '0');
+
   return (
-    <div className="bg-cyber-900/50 backdrop-blur-lg rounded-xl overflow-hidden border border-cyber-700/50 hover:border-neon-400 transition-all duration-300 group">
-      <div className="relative">
-        <img
-          src={phone.img}
-          alt={phone.name}
-          className="w-full h-48 object-contain bg-cyber-950/50 p-4 group-hover:scale-105 transition-transform duration-300"
-        />
+    <div className="specimen-card" style={{ display: 'flex', flexDirection: 'column' }}>
+      {/* Catalog header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0.5rem 0.75rem',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--paper)',
+        position: 'relative',
+        zIndex: 1,
+      }}>
+        <span className="catalog-num">#{catalogNum}</span>
         <button
           onClick={toggleFavorite}
-          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 z-10 ${
-            isFav ? 'text-red-500 bg-white/10' : 'text-gray-400 hover:text-red-500 bg-black/20 hover:bg-white/10'
-          }`}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '2px',
+            color: isFav ? 'var(--rust)' : 'var(--ink-3)',
+            transition: 'color 0.2s',
+            lineHeight: 1,
+          }}
+          title={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
         >
-          <Heart className={`h-5 w-5 ${isFav ? 'fill-current' : ''}`} />
+          <Heart size={13} fill={isFav ? 'currentColor' : 'none'} strokeWidth={1.5} />
         </button>
-        <div className="absolute inset-0 bg-gradient-to-t from-cyber-900 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
-      
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-cyber-50 group-hover:text-neon-400 transition-colors">
-          {phone.name}
-        </h3>
-        {phone.description && (
-          <p className="text-cyber-200 mt-1 text-sm">{phone.description}</p>
+
+      {/* Image area */}
+      <div style={{
+        background: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.5rem',
+        borderBottom: '1px solid var(--border)',
+        position: 'relative',
+        zIndex: 1,
+        minHeight: '180px',
+      }}>
+        {phone.img ? (
+          <img
+            src={phone.img}
+            alt={phone.name}
+            referrerPolicy="no-referrer"
+            style={{
+              maxHeight: '150px',
+              maxWidth: '100%',
+              objectFit: 'contain',
+              display: 'block',
+              margin: '0 auto',
+            }}
+          />
+        ) : (
+          <div style={{
+            width: '80px',
+            height: '120px',
+            border: '1px dashed var(--border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <span style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.55rem', color: 'var(--ink-3)', textTransform: 'uppercase' }}>
+              sem imagem
+            </span>
+          </div>
         )}
-        
+      </div>
+
+      {/* Info */}
+      <div style={{ padding: '0.75rem', position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        {/* Brand */}
+        <div className="catalog-num" style={{ color: 'var(--rust)', letterSpacing: '0.12em' }}>
+          {phone.name.split(' ')[0]}
+        </div>
+
+        {/* Name */}
+        <h3 style={{
+          fontFamily: '"Cormorant Garamond", Georgia, serif',
+          fontWeight: 400,
+          fontSize: '1.1rem',
+          color: 'var(--ink)',
+          lineHeight: 1.2,
+          margin: 0,
+        }}>
+          {phone.name.split(' ').slice(1).join(' ') || phone.name}
+        </h3>
+
+        {/* Action */}
         {onSelect && (
           <button
             onClick={() => onSelect(phone)}
-            className={`mt-4 w-full py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 ${
-              isSelected
-                ? 'bg-neon-500 text-cyber-950 shadow-neon'
-                : 'bg-cyber-700 text-cyber-50 hover:bg-cyber-600'
-            }`}
+            style={{
+              marginTop: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem',
+              padding: '0.4rem 0.75rem',
+              width: '100%',
+              fontFamily: '"Space Mono", monospace',
+              fontSize: '0.65rem',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              border: isSelected ? '1px solid var(--rust)' : '1px solid var(--border)',
+              background: isSelected ? 'var(--rust)' : 'transparent',
+              color: isSelected ? 'var(--paper)' : 'var(--ink-2)',
+              transition: 'all 0.2s',
+            }}
           >
-            {isSelected ? (
-              <>
-                <Check className="h-5 w-5" />
-                <span>Selecionado</span>
-              </>
-            ) : (
-              <>
-                <Plus className="h-5 w-5" />
-                <span>Comparar</span>
-              </>
-            )}
+            {isSelected ? <><Check size={11} /> Selecionado</> : <><Plus size={11} /> Comparar</>}
           </button>
         )}
       </div>

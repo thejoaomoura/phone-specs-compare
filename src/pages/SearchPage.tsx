@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search as SearchIcon, Filter } from 'lucide-react';
+import { Search as SearchIcon, SlidersHorizontal } from 'lucide-react';
 import { useSearch } from '../hooks/useSearch';
 import { useBrands } from '../hooks/useBrands';
 import PhoneCard from '../components/PhoneCard';
@@ -17,13 +17,10 @@ export default function SearchPage() {
   const { data: phones, isLoading, isError } = useSearch(searchTerm);
   const { data: brands } = useBrands();
 
-  const handlePhoneSelect = (phone: Phone) => {
-    setSelectedPhones(prev => {
-      const newSelection = prev.includes(phone.id)
-        ? prev.filter(id => id !== phone.id)
-        : [...prev, phone.id];
-      return newSelection;
-    });
+  const handleSelect = (phone: Phone) => {
+    setSelectedPhones(prev =>
+      prev.includes(phone.id) ? prev.filter(id => id !== phone.id) : [...prev, phone.id]
+    );
   };
 
   const handleCompare = () => {
@@ -32,98 +29,193 @@ export default function SearchPage() {
     }
   };
 
-  const filteredPhones = phones?.filter(phone => 
+  const filtered = phones?.filter(phone =>
     !selectedBrand || phone.name.toLowerCase().includes(selectedBrand.toLowerCase())
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-          Buscar Celulares
-        </h1>
-        
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative group">
-              <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-cyan-400 transition-colors h-5 w-5" />
-              <input
-                type="text"
-                placeholder="Digite o nome do celular..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl 
-                         text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 
-                         focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200
-                         hover:bg-gray-800/70"
-              />
-            </div>
+    <div style={{ minHeight: '100vh' }}>
+      {/* ── Page header ──────────────────────────────── */}
+      <div style={{
+        borderBottom: '1px solid var(--border)',
+        padding: '2.5rem 1.5rem 2rem',
+        background: 'var(--paper-2)',
+      }}>
+        <div className="page-container">
+          <div className="section-label" style={{ marginBottom: '0.5rem' }}>
+            Busca no acervo
+          </div>
+          <h1 style={{
+            fontFamily: '"Cormorant Garamond", Georgia, serif',
+            fontWeight: 300,
+            fontSize: 'clamp(2rem, 5vw, 3.25rem)',
+            color: 'var(--ink)',
+            margin: 0,
+            lineHeight: 1.1,
+          }}>
+            Localizar dispositivos
+          </h1>
+        </div>
+      </div>
+
+      {/* ── Search controls ───────────────────────────── */}
+      <div style={{
+        borderBottom: '2px solid var(--ink)',
+        background: 'var(--paper)',
+        position: 'sticky',
+        top: '88px',
+        zIndex: 30,
+      }}>
+        <div className="page-container" style={{ display: 'flex', gap: 0, padding: '0 1.5rem' }}>
+          {/* Search input */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', borderRight: '1px solid var(--border)' }}>
+            <SearchIcon size={14} style={{ color: 'var(--ink-3)', flexShrink: 0, marginLeft: '0.75rem' }} />
+            <input
+              type="text"
+              placeholder="Ex: Samsung Galaxy S25, iPhone 17…"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="field-input"
+              style={{ borderBottom: 'none', borderLeft: '1px solid transparent', paddingLeft: '0.75rem' }}
+            />
           </div>
 
-          <div className="relative min-w-[200px]">
-            <div className="relative group">
-              <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-cyan-400 transition-colors h-5 w-5" />
-              <select
-                value={selectedBrand}
-                onChange={(e) => setSelectedBrand(e.target.value)}
-                className="w-full appearance-none pl-12 pr-10 py-3 bg-gray-800/50 border border-gray-700/50 
-                         rounded-xl text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 
-                         focus:border-transparent transition-all duration-200 hover:bg-gray-800/70 cursor-pointer"
-              >
-                <option value="">Todas as marcas</option>
-                {brands?.map((brand) => (
-                  <option key={brand.id} value={brand.name}>
-                    {brand.name} ({brand.devices} dispositivos)
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+          {/* Brand filter */}
+          <div style={{ position: 'relative', minWidth: '220px', display: 'flex', alignItems: 'center' }}>
+            <SlidersHorizontal size={13} style={{ color: 'var(--ink-3)', position: 'absolute', left: '0.75rem', zIndex: 1 }} />
+            <select
+              value={selectedBrand}
+              onChange={e => setSelectedBrand(e.target.value)}
+              className="field-select"
+              style={{ borderBottom: 'none', paddingLeft: '2.5rem' }}
+            >
+              <option value="">Todas as marcas</option>
+              {brands?.map(b => (
+                <option key={b.id} value={b.name}>{b.name} ({b.devices})</option>
+              ))}
+            </select>
+            <div style={{ position: 'absolute', right: '0.75rem', pointerEvents: 'none', color: 'var(--ink-3)' }}>
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square"/>
+              </svg>
             </div>
           </div>
         </div>
+      </div>
 
-        {isLoading && (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner />
-          </div>
-        )}
+      {/* ── Results ───────────────────────────────────── */}
+      <div className="page-container" style={{ padding: '2rem 1.5rem' }}>
+        {/* Status line */}
+        <div style={{
+          fontFamily: '"Space Mono", monospace',
+          fontSize: '0.65rem',
+          color: 'var(--ink-3)',
+          letterSpacing: '0.08em',
+          marginBottom: '1.5rem',
+          minHeight: '1rem',
+        }}>
+          {isLoading && 'Consultando acervo…'}
+          {!isLoading && filtered && (
+            <>
+              {filtered.length === 0
+                ? 'Nenhum dispositivo encontrado'
+                : `${filtered.length} dispositivo${filtered.length !== 1 ? 's' : ''} encontrado${filtered.length !== 1 ? 's' : ''}`
+              }
+              {searchTerm && ` — busca por "${searchTerm}"`}
+            </>
+          )}
+          {!isLoading && !filtered && !isError && 'Digite para buscar no catálogo'}
+        </div>
 
+        {isLoading && <LoadingSpinner />}
         {isError && (
-          <div className="py-8">
-            <ErrorMessage message="Erro ao carregar os celulares. Tente novamente mais tarde." />
-          </div>
+          <ErrorMessage message="Erro ao consultar o acervo. Tente novamente." />
         )}
 
-        {!isLoading && !isError && filteredPhones && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
-            {filteredPhones.map((phone) => (
+        {!isLoading && !isError && filtered && filtered.length > 0 && (
+          <div className="stagger" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: '1px',
+            background: 'var(--border)',
+            border: '1px solid var(--border)',
+          }}>
+            {filtered.map((phone, i) => (
               <PhoneCard
                 key={phone.id}
                 phone={phone}
+                index={i}
                 isSelected={selectedPhones.includes(phone.id)}
-                onSelect={handlePhoneSelect}
+                onSelect={handleSelect}
               />
             ))}
           </div>
         )}
 
-        {selectedPhones.length >= 2 && (
-          <div className="fixed bottom-4 right-4 z-10">
-            <button
-              onClick={handleCompare}
-              className="px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl 
-              shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-purple-700 
-              transform hover:-translate-y-0.5 transition-all duration-300"
-            >
-              Comparar ({selectedPhones.length})
-            </button>
+        {!isLoading && !isError && filtered && filtered.length === 0 && searchTerm && (
+          <div style={{
+            padding: '4rem 2rem',
+            textAlign: 'center',
+            border: '1px dashed var(--border)',
+            background: 'var(--paper-2)',
+          }}>
+            <div style={{
+              fontFamily: '"Cormorant Garamond", Georgia, serif',
+              fontSize: '3rem',
+              color: 'var(--border)',
+              marginBottom: '0.5rem',
+              fontStyle: 'italic',
+              fontWeight: 300,
+            }}>
+              Não encontrado
+            </div>
+            <p style={{
+              fontFamily: '"EB Garamond", Georgia, serif',
+              color: 'var(--ink-3)',
+              fontSize: '1rem',
+            }}>
+              Nenhum dispositivo corresponde à busca <em>"{searchTerm}"</em>.
+            </p>
           </div>
         )}
       </div>
+
+      {/* ── Compare bar ───────────────────────────────── */}
+      {selectedPhones.length >= 1 && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'var(--ink)',
+          color: 'var(--paper)',
+          padding: '0.75rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderTop: '2px solid var(--rust)',
+          zIndex: 40,
+        }}>
+          <span style={{
+            fontFamily: '"Space Mono", monospace',
+            fontSize: '0.7rem',
+            letterSpacing: '0.08em',
+          }}>
+            {selectedPhones.length} selecionado{selectedPhones.length !== 1 ? 's' : ''} — {selectedPhones.length < 2 ? 'selecione mais 1 para comparar' : 'pronto para comparar'}
+          </span>
+          <button
+            className="btn-primary"
+            onClick={handleCompare}
+            disabled={selectedPhones.length < 2}
+            style={{
+              opacity: selectedPhones.length < 2 ? 0.5 : 1,
+              cursor: selectedPhones.length < 2 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Comparar selecionados
+          </button>
+        </div>
+      )}
     </div>
   );
 }

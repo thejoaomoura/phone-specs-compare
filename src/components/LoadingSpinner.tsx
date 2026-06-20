@@ -1,9 +1,16 @@
-import React from 'react';
-
 export default function LoadingSpinner() {
   return (
-    <div className="flex justify-center items-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '3rem' }}>
+      <div className="archive-spinner" />
+      <span style={{
+        fontFamily: '"Space Mono", monospace',
+        fontSize: '0.65rem',
+        letterSpacing: '0.15em',
+        textTransform: 'uppercase',
+        color: 'var(--ink-3)',
+      }}>
+        Carregando acervo…
+      </span>
     </div>
   );
 }

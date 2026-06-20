@@ -2,85 +2,426 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --paper:   #F2EDE2;
+  --paper-2: #EAE4D0;
+  --paper-3: #D9CFBA;
+  --border:  #C4B59A;
+  --ink:     #1C110A;
+  --ink-2:   #5C4232;
+  --ink-3:   #8C7162;
+  --rust:    #C1440E;
+  --rust-2:  #962E07;
+  --sage:    #5A7C44;
+}
+
 @layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 min-h-screen;
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* Paper grain texture overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.028;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    line-height: 1.15;
   }
 
   ::-webkit-scrollbar {
-    @apply w-2;
+    width: 6px;
+    height: 6px;
   }
-
   ::-webkit-scrollbar-track {
-    @apply bg-gray-800;
+    background: var(--paper-2);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-3);
   }
 
-  ::-webkit-scrollbar-thumb {
-    @apply bg-gray-700 rounded-full hover:bg-gray-600 transition-colors;
+  ::selection {
+    background: var(--rust);
+    color: var(--paper);
   }
 }
 
 @layer components {
-  .glass-panel {
-    @apply bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl;
+
+  /* ─── TYPOGRAPHY ──────────────────────────────────────── */
+  .font-display  { font-family: 'Cormorant Garamond', Georgia, serif; }
+  .font-mono-ui  { font-family: 'Space Mono', monospace; }
+
+  /* ─── LAYOUT ──────────────────────────────────────────── */
+  .page-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
   }
 
-  .glass-input {
-    @apply bg-gray-800/50 border border-gray-700/50 rounded-xl text-gray-100 
-           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 
-           focus:border-transparent transition-all duration-200 hover:bg-gray-800/70;
+  /* ─── DIVIDERS ────────────────────────────────────────── */
+  .rule {
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+  .rule-double {
+    border: none;
+    border-top: 3px double var(--border);
   }
 
+  /* ─── SPECIMEN CARD ───────────────────────────────────── */
+  .specimen-card {
+    background: var(--paper-2);
+    border: 1px solid var(--border);
+    position: relative;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.25s ease,
+                border-color 0.2s ease;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .specimen-card::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid var(--border);
+    pointer-events: none;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    z-index: 0;
+  }
+  .specimen-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(28, 17, 10, 0.12);
+    border-color: var(--rust);
+  }
+  .specimen-card:hover::before {
+    opacity: 0;
+  }
+
+  /* ─── BUTTONS ─────────────────────────────────────────── */
   .btn-primary {
-    @apply px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl
-           shadow-lg hover:shadow-xl hover:from-cyan-600 hover:to-blue-600
-           transform hover:-translate-y-0.5 transition-all duration-200;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.5rem;
+    background: var(--rust);
+    color: var(--paper);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+  .btn-primary:hover {
+    background: var(--rust-2);
+    transform: translateY(-1px);
   }
 
-  .btn-secondary {
-    @apply px-4 py-2 bg-gray-800 text-gray-100 rounded-xl border border-gray-700
-           hover:bg-gray-700 transition-all duration-200;
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    color: var(--ink);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-ghost:hover {
+    background: var(--paper-3);
+    border-color: var(--ink-3);
+    color: var(--ink);
   }
 
-  .comparison-table {
-    @apply w-full border-collapse;
+  /* ─── FORM ELEMENTS ───────────────────────────────────── */
+  .field-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--paper);
+    border: none;
+    border-bottom: 2px solid var(--border);
+    color: var(--ink);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s ease;
   }
-  
-  .comparison-table th {
-    @apply bg-gray-800/80 backdrop-blur-sm text-gray-100 px-4 py-3 text-left font-semibold rounded-t-lg;
+  .field-input::placeholder {
+    color: var(--ink-3);
   }
-  
-  .comparison-table td {
-    @apply px-4 py-3 border-b border-gray-700/50;
+  .field-input:focus {
+    border-bottom-color: var(--rust);
+    background: var(--paper-2);
   }
-  
-  .comparison-table tr:hover {
-    @apply bg-gray-800/50 transition-colors;
+
+  .field-select {
+    appearance: none;
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    background: var(--paper);
+    border: none;
+    border-bottom: 2px solid var(--border);
+    color: var(--ink);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
   }
-  
-  .spec-category {
-    @apply glass-panel mb-6 overflow-hidden;
+  .field-select:focus {
+    border-bottom-color: var(--rust);
   }
-  
-  .spec-category-header {
-    @apply bg-gradient-to-r from-cyan-500 to-blue-500
-           px-6 py-3 text-white font-semibold text-lg;
+
+  /* ─── CATALOG NUMBER ──────────────────────────────────── */
+  .catalog-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    text-transform: uppercase;
   }
-  
-  .spec-row {
-    @apply grid grid-cols-[200px,1fr] md:grid-cols-[200px,repeat(2,1fr)] lg:grid-cols-[200px,repeat(3,1fr)]
-           border-b border-gray-700/50 last:border-0;
+
+  /* ─── SPEC TABLE ──────────────────────────────────────── */
+  .spec-table td {
+    padding: 0.4rem 0;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
   }
-  
-  .spec-label {
-    @apply px-4 py-3 font-medium text-gray-300 bg-gray-800/30;
+  .spec-table td:first-child {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-right: 1rem;
+    white-space: nowrap;
+    width: 40%;
   }
-  
-  .spec-value {
-    @apply px-4 py-3 text-gray-100;
+  .spec-table td:last-child {
+    color: var(--ink);
   }
-  
-  .phone-card {
-    @apply glass-panel p-4 hover:scale-[1.02] transition-all duration-200 cursor-pointer;
+  .spec-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* ─── ANIMATIONS ──────────────────────────────────────── */
+  @keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes revealBar {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  .anim-slide-up {
+    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .anim-slide-left {
+    animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* staggered children */
+  .stagger > * { opacity: 0; animation: slideUpFade 0.55s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .stagger > *:nth-child(1)  { animation-delay: 0.05s; }
+  .stagger > *:nth-child(2)  { animation-delay: 0.12s; }
+  .stagger > *:nth-child(3)  { animation-delay: 0.19s; }
+  .stagger > *:nth-child(4)  { animation-delay: 0.26s; }
+  .stagger > *:nth-child(5)  { animation-delay: 0.33s; }
+  .stagger > *:nth-child(6)  { animation-delay: 0.40s; }
+  .stagger > *:nth-child(7)  { animation-delay: 0.47s; }
+  .stagger > *:nth-child(8)  { animation-delay: 0.54s; }
+  .stagger > *:nth-child(9)  { animation-delay: 0.61s; }
+  .stagger > *:nth-child(10) { animation-delay: 0.68s; }
+  .stagger > *:nth-child(11) { animation-delay: 0.75s; }
+  .stagger > *:nth-child(12) { animation-delay: 0.82s; }
+
+  /* ─── NAV INDICATOR ───────────────────────────────────── */
+  .nav-link {
+    position: relative;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    text-decoration: none;
+    padding: 0.25rem 0;
+    transition: color 0.2s;
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--rust);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav-link:hover,
+  .nav-link.active {
+    color: var(--rust);
+  }
+  .nav-link:hover::after,
+  .nav-link.active::after {
+    transform: scaleX(1);
+  }
+
+  /* ─── SECTION LABEL ───────────────────────────────────── */
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--rust);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ─── LOADING SPINNER ─────────────────────────────────── */
+  @keyframes spinnerRotate {
+    to { transform: rotate(360deg); }
+  }
+  .archive-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid var(--border);
+    border-top-color: var(--rust);
+    border-radius: 50%;
+    animation: spinnerRotate 0.8s linear infinite;
+  }
+
+  /* ─── MODAL ───────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 17, 10, 0.65);
+    backdrop-filter: blur(2px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal-panel {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    width: 100%;
+    max-width: 860px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* ─── TAG CHIP ────────────────────────────────────────── */
+  .tag {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--paper-3);
+    border: 1px solid var(--border);
+    color: var(--ink-2);
+  }
+  .tag-rust {
+    background: var(--rust);
+    border-color: var(--rust-2);
+    color: var(--paper);
+  }
+
+  /* ─── COMPARISON TABLE ────────────────────────────────── */
+  .compare-cat-header {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    padding: 0.6rem 1rem;
+  }
+  .compare-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .compare-row:hover {
+    background: var(--paper-2);
+  }
+  .compare-row.diff {
+    background: var(--rust-50, #fdf0eb);
+  }
+  .compare-cell-label {
+    padding: 0.6rem 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-2);
+    background: var(--paper-2);
+    border-right: 1px solid var(--border);
+  }
+  .compare-cell-value {
+    padding: 0.6rem 1rem;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    text-align: center;
+  }
+  .compare-cell-value.highlight {
+    color: var(--rust);
+    font-weight: 500;
   }
 }

@@ -20,7 +20,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="min-h-screen bg-gradient-to-b from-cyber-950 to-cyber-900 text-cyber-50">
+        <div style={{ minHeight: '100vh', background: 'var(--paper)', color: 'var(--ink)' }}>
           <Header />
           <main>
             <Routes>
