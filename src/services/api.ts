@@ -3,6 +3,13 @@ import cheerio from 'cheerio';
 import { Phone, PhoneDetail } from '../types';
 
 const BASE_URL = '/gsmarena';
+const IMG_CDN = 'https://fdn2.gsmarena.com/vv/bigpic/';
+
+// [brandId, phoneId, phoneName, keywords, imgFilename, shortName]
+type QuicksearchEntry = [number, number, string, string, string, string];
+type QuicksearchData = [Record<string, string>, QuicksearchEntry[]];
+
+let quicksearchCache: QuicksearchData | null = null;
 
 const getDataFromUrl = async (url: string) => {
   try {
@@ -19,6 +26,23 @@ const getDataFromUrl = async (url: string) => {
   }
 };
 
+const getQuicksearchData = async (): Promise<QuicksearchData> => {
+  if (quicksearchCache) return quicksearchCache;
+
+  // Extract the versioned quicksearch URL from the homepage JS
+  const homepage = await getDataFromUrl('/');
+  const match = homepage.match(/AUTOCOMPLETE_LIST_URL\s*=\s*"([^"]+)"/);
+  if (!match) throw new Error('Autocomplete URL not found in homepage');
+
+  const response = await axios.get(`${BASE_URL}${match[1]}`, {
+    headers: { 'Accept': '*/*' },
+    responseType: 'text',
+  });
+
+  quicksearchCache = JSON.parse(response.data) as QuicksearchData;
+  return quicksearchCache;
+};
+
 interface FetchPhonesParams {
   search?: string;
   brand?: string;
@@ -29,7 +53,7 @@ interface FetchPhonesParams {
 export const fetchPhones = async (params?: FetchPhonesParams) => {
   try {
     let url = '/';
-    
+
     if (params?.brand) {
       url = `/${params.brand}.php`;
     } else if (params?.search) {
@@ -40,21 +64,19 @@ export const fetchPhones = async (params?: FetchPhonesParams) => {
     const $ = cheerio.load(html);
     const phones: Phone[] = [];
 
-    $('.phone-item').each((_, element) => {
-      const $element = $(element);
-      const $link = $element.find('a');
-      const id = $link.attr('href')?.split('-')[1].replace('.php', '') || '';
-      const name = $element.find('.phone-name').text().trim();
-      const img = $element.find('img').attr('src') || '';
-      const description = $element.find('.phone-description').text().trim();
+    $('.makers ul li').each((_, element) => {
+      const $link = $(element).find('a');
+      const href = $link.attr('href') || '';
+      const id = href.split('/').pop()?.replace('.php', '') || '';
+      const imgEl = $link.find('img');
+      const img = imgEl.attr('src') || '';
+      const title = imgEl.attr('title') || '';
+      const name = title.split(' smartphone')[0].split(' tablet')[0].split(' watch')[0].trim()
+        || $link.find('strong span').text().trim();
+      const description = title;
 
       if (id && name) {
-        phones.push({
-          id,
-          name,
-          img: img.startsWith('http') ? img : `${BASE_URL}${img}`,
-          description
-        });
+        phones.push({ id, name, img, description });
       }
     });
 
@@ -67,79 +89,51 @@ export const fetchPhones = async (params?: FetchPhonesParams) => {
 
 export const fetchTopPhones = async () => {
   try {
-    const html = await getDataFromUrl('/');
-    const $ = cheerio.load(html);
-    
-    const phones: Phone[] = [];
-    $('.phone-item').each((_, element) => {
-      const $element = $(element);
-      const id = $element.find('a').attr('href')?.split('-')[1].replace('.php', '') || '';
-      const name = $element.find('.phone-name').text().trim();
-      const img = $element.find('img').attr('src') || '';
-      const description = $element.find('.phone-description').text().trim();
-      
-      phones.push({
-        id,
-        name,
-        img,
-        description
-      });
+    // The quicksearch data is sorted by daily popularity — first entries = top trending.
+    const [brands, phones] = await getQuicksearchData();
+
+    return phones.slice(0, 12).map(([brandId, phoneId, phoneName, , imgFile]) => {
+      const brandName = brands[String(brandId)] || '';
+      const fullName = `${brandName} ${phoneName}`.trim();
+      const slug = fullName.toLowerCase().replace(/ /g, '_');
+      return {
+        id: `${slug}-${phoneId}`,
+        name: fullName,
+        img: imgFile ? `${IMG_CDN}${imgFile}` : '',
+        description: '',
+      };
     });
-    
-    return phones.slice(0, 12); // Return top 12 phones
   } catch (error) {
     console.error('Error fetching top phones:', error);
     throw error;
   }
 };
 
-export const searchPhones = async (searchValue: string) => {
-  if (!searchValue) return [];
-  
+export const searchPhones = async (searchValue: string): Promise<Phone[]> => {
+  if (!searchValue.trim()) return [];
+
   try {
-    console.log('Searching phones with query:', searchValue);
-    const data = await getDataFromUrl(`/results.php3?sQuickSearch=yes&sName=${encodeURIComponent(searchValue)}`);
-    
-    if (!data) {
-      console.warn('No data received from API');
-      return fetchPhones({ search: searchValue });
+    const [brands, phones] = await getQuicksearchData();
+    const query = searchValue.toLowerCase();
+    const results: Phone[] = [];
+
+    for (const [brandId, phoneId, phoneName, keywords, imgFile] of phones) {
+      const brandName = brands[String(brandId)] || '';
+      const fullName = `${brandName} ${phoneName}`.trim();
+      const searchable = `${fullName} ${keywords}`.toLowerCase();
+
+      if (searchable.includes(query)) {
+        const slug = fullName.toLowerCase().replace(/ /g, '_');
+        const id = `${slug}-${phoneId}`;
+        const img = imgFile ? `${IMG_CDN}${imgFile}` : '';
+        results.push({ id, name: fullName, img, description: '' });
+      }
     }
 
-    const $ = cheerio.load(data);
-    const phones: Phone[] = [];
-    
-    $('.makers ul li').each((_, element) => {
-      try {
-        const $element = $(element);
-        const $link = $element.find('a');
-        const $img = $element.find('img');
-        
-        const href = $link.attr('href');
-        const id = href?.split('.php')[0] || '';
-        const name = $link.text().trim();
-        const img = $img.attr('src') || '';
-        const description = $element.find('.phones-item-description').text().trim();
-        
-        if (id && name) {
-          const imgUrl = img.startsWith('http') ? img : `${BASE_URL}${img}`;
-          //console.log('Found phone:', { id, name, imgUrl });
-          phones.push({ id, name, img: imgUrl, description });
-        }
-      } catch (parseError) {
-        console.error('Error parsing phone element:', parseError);
-      }
-    });
-    
-    if (phones.length === 0) {
-      console.warn('Nenhum telefone encontrado na resposta da API, retornando à pesquisa local');
-      return fetchPhones({ search: searchValue });
-    }
-    
-    return phones;
+    return results.slice(0, 30);
   } catch (error) {
     console.error('Erro ao pesquisar modelos:', error);
-    //console.log('Falling back to local search');
-    return fetchPhones({ search: searchValue });
+    return [];
   }
 };
 
@@ -149,12 +143,14 @@ export const getBrands = async () => {
     const $ = cheerio.load(html);
     const brands: Array<{ id: string; name: string; devices: number }> = [];
 
-    $('.brand-listings li').each((_, element) => {
-      const $element = $(element);
-      const $link = $element.find('a');
-      const id = $link.attr('href')?.split('.')[0] || '';
-      const name = $link.text().trim();
-      const devices = parseInt($element.find('.count').text().trim()) || 0;
+    // Structure: .st-text > table > tbody > tr > td > a
+    // <a href="https://www.gsmarena.com/samsung-phones-9.php">Samsung<br><span>1456 devices</span></a>
+    $('.st-text table td a').each((_, element) => {
+      const $link = $(element);
+      const href = $link.attr('href') || '';
+      const id = href.split('/').pop()?.replace('.php', '') || '';
+      const name = $link.contents().first().text().trim();
+      const devices = parseInt($link.find('span').text()) || 0;
 
       if (id && name) {
         brands.push({ id, name, devices });
