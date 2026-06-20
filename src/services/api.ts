@@ -2,7 +2,9 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 import { Phone, PhoneDetail } from '../types';
 
-const BASE_URL = '/gsmarena';
+const GSMARENA_ORIGIN = 'https://www.gsmarena.com';
+const LOCAL_PROXY_URL = '/gsmarena';
+const VERCEL_PROXY_URL = '/api/gsmarena';
 const IMG_CDN = 'https://fdn2.gsmarena.com/vv/bigpic/';
 
 // [brandId, phoneId, phoneName, keywords, imgFilename, shortName]
@@ -11,9 +13,22 @@ type QuicksearchData = [Record<string, string>, QuicksearchEntry[]];
 
 let quicksearchCache: QuicksearchData | null = null;
 
+const getProxyUrl = (path: string) => {
+  if (import.meta.env.DEV) {
+    return `${LOCAL_PROXY_URL}${path}`;
+  }
+
+  return `${VERCEL_PROXY_URL}?path=${encodeURIComponent(path)}`;
+};
+
+const getImageUrl = (src: string) => {
+  if (!src) return '';
+  return src.startsWith('http') ? src : `${GSMARENA_ORIGIN}${src}`;
+};
+
 const getDataFromUrl = async (url: string) => {
   try {
-    const response = await axios.get(`${BASE_URL}${url}`, {
+    const response = await axios.get(getProxyUrl(url), {
       headers: {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
@@ -34,7 +49,7 @@ const getQuicksearchData = async (): Promise<QuicksearchData> => {
   const match = homepage.match(/AUTOCOMPLETE_LIST_URL\s*=\s*"([^"]+)"/);
   if (!match) throw new Error('Autocomplete URL not found in homepage');
 
-  const response = await axios.get(`${BASE_URL}${match[1]}`, {
+  const response = await axios.get(getProxyUrl(match[1]), {
     headers: { 'Accept': '*/*' },
     responseType: 'text',
   });
@@ -265,7 +280,7 @@ export const getPhoneDetails = async (deviceId: string): Promise<PhoneDetail> =>
       id: name.toLowerCase().replace(/\s+/g, '-'),
       name,
       brand: name.split(' ')[0],
-      img: img.startsWith('http') ? img : `${BASE_URL}${img}`,
+      img: getImageUrl(img),
       priceRange: { min: 0, max: 0 },
       ratings: { overall: 0, display: 0, camera: 0, performance: 0, battery: 0 },
       quickSpec: quickSpec.slice(0, 7),

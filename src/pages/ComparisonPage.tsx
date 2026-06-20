@@ -1,10 +1,11 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, Bookmark } from 'lucide-react';
-import { usePhoneDetails } from '../hooks/usePhoneDetails';
+import { useQueries } from 'react-query';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import { PhoneDetail } from '../types';
 import { translateCategory, translateSpec } from '../utils/translations';
+import { getPhoneDetails } from '../services/api';
 import { fetchPhonePrice } from '../services/priceService';
 import { useEffect, useState, useCallback } from 'react';
 import { CheckCircle } from 'lucide-react';
@@ -21,26 +22,44 @@ export default function ComparisonPage() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const phoneQueries = phoneIds.map(id => usePhoneDetails(id));
+  const phoneQueries = useQueries(
+    phoneIds.map(id => ({
+      queryKey: ['phone', id],
+      queryFn: () => getPhoneDetails(id),
+      enabled: Boolean(id),
+      staleTime: 60 * 60 * 1000,
+    }))
+  );
   const isLoading = phoneQueries.some(q => q.isLoading);
   const errors = phoneQueries.filter(q => q.error).map(q => q.error);
   const phones = phoneQueries.map(q => q.data).filter((p): p is PhoneDetail => Boolean(p));
+  const phonePriceKey = phones.map(phone => phone.name).join('|');
 
   useEffect(() => {
-    if (phones.length === 0) return;
+    if (!phonePriceKey) return;
+
+    let isMounted = true;
+    const phoneNames = phonePriceKey.split('|');
+
     Promise.all(
-      phones.map(async phone => {
-        const info = await fetchPhonePrice(phone.name);
-        return { id: phone.name, ...info };
+      phoneNames.map(async name => {
+        const info = await fetchPhonePrice(name);
+        return { id: name, ...info };
       })
     ).then(prices => {
+      if (!isMounted) return;
+
       const map = prices.reduce((acc, { id, price, link }) => {
         if (price) acc[id] = { price, link };
         return acc;
       }, {} as Record<string, { price: string; link: string | null }>);
       setPhonePrices(map);
     });
-  }, [phones.length]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [phonePriceKey]);
 
   const handleSave = () => {
     const saved = JSON.parse(localStorage.getItem('savedComparisons') || '[]');
