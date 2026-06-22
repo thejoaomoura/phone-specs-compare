@@ -13,6 +13,14 @@
   --rust:    #C1440E;
   --rust-2:  #962E07;
   --sage:    #5A7C44;
+
+  /* shadcn token compatibility (for ProgressiveFluxLoader) */
+  --muted: 234 18% 92%;
+  --muted-foreground: 20 18% 46%;
+
+  /* flux bar colors — rust palette */
+  --flux-from: #C1440E;
+  --flux-to:   #F0B89A;
 }
 
 @layer base {

@@ -4,6 +4,7 @@ import { Search, ArrowRight, Scale, Bookmark } from 'lucide-react';
 import { useTopPhones } from '../hooks/useTopPhones';
 import SocialCards from '../components/ui/card-fan-carousel';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { ProgressiveFluxLoader } from '../components/ui/progressive-flux-loader';
 import ErrorMessage from '../components/ErrorMessage';
 import { ShaderAnimation } from '../components/ui/shader-animation';
 import DisplayCards from '../components/ui/display-cards';
@@ -390,7 +391,20 @@ export default function HomePage() {
           </button>
         </div>
 
-        {isLoading && <LoadingSpinner />}
+        {isLoading && (
+          <div style={{ padding: '3rem 1.5rem' }}>
+            <ProgressiveFluxLoader
+              duration={8}
+              loop={false}
+              phases={[
+                { at: 0,  label: "conectando ao acervo…" },
+                { at: 30, label: "buscando dispositivos…" },
+                { at: 65, label: "classificando modelos…" },
+                { at: 90, label: "quase pronto…" },
+              ]}
+            />
+          </div>
+        )}
         {isError && (
           <ErrorMessage
             message="Não foi possível carregar o acervo. Verifique sua conexão."

@@ -12,6 +12,10 @@ export default {
         body: ['"EB Garamond"', 'Georgia', 'serif'],
       },
       colors: {
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
         paper: {
           50:  '#FDFAF5',
           100: '#F5EDD5',
