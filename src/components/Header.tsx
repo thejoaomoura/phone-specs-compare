@@ -2,10 +2,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { Search, BarChart2, Bookmark, Archive } from 'lucide-react';
 
 const navItems = [
-  { path: '/',         label: 'Início',    icon: Archive },
-  { path: '/buscar',   label: 'Catálogo',  icon: Search },
-  { path: '/comparar', label: 'Comparar',  icon: BarChart2 },
-  { path: '/favoritos',label: 'Coleção',   icon: Bookmark },
+  { path: '/', label: 'Início', icon: Archive },
+  { path: '/buscar', label: 'Catálogo', icon: Search },
+  { path: '/comparar', label: 'Comparar', icon: BarChart2 },
+  { path: '/favoritos', label: 'Coleção', icon: Bookmark },
 ];
 
 export default function Header() {
@@ -19,7 +19,6 @@ export default function Header() {
       top: 0,
       zIndex: 40,
     }}>
-      {/* top strip */}
       <div style={{
         background: 'var(--ink)',
         color: 'var(--paper)',
@@ -27,14 +26,20 @@ export default function Header() {
         fontSize: '0.6rem',
         letterSpacing: '0.15em',
         textAlign: 'center',
-        padding: '0.25rem 0',
+        padding: '0.25rem 0.75rem',
         textTransform: 'uppercase',
       }}>
-        Arquivo Técnico de Dispositivos Móveis — Coleção Aberta
+        Arquivo Técnico de Dispositivos Móveis - Coleção Aberta
       </div>
 
-      <nav className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem' }}>
-        {/* Logo */}
+      <nav className="page-container" style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        padding: '1rem 1.5rem',
+      }}>
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
           <span style={{
             fontFamily: '"Cormorant Garamond", Georgia, serif',
@@ -57,8 +62,13 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Nav */}
-        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+        <div style={{
+          display: 'flex',
+          gap: 'clamp(0.75rem, 3vw, 2rem)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+        }}>
           {navItems.map(({ path, label, icon: Icon }) => {
             const active = pathname === path || (path !== '/' && pathname.startsWith(path));
             return (
